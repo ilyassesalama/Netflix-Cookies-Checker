@@ -6,11 +6,18 @@ This tools helps you automate the process of checking if a Netflix cookie is val
 2. Create a new directory called `cookies` and put all of your cookies in it.
 3. Run the script by running `python main.py`.
 
+> [!NOTE]
+> No proxy is needed. Also, this script only supports Netscape format for now.
+
 Keep in mind that the cookies will be renamed then moved to their respective folders. If the cookie is valid, the script will try to extract 4 things:
 - The country of sign up. (e.g. US, BR, MX, etc.).
 - Does the account have extra members feature. (e.g. True, None).
 - Account GUID.
 - Member since date.
 
-## Desclaimer
+> [!TIP]
+> By default, the script automatically handles duplicates since it names working cookies in this format `cookie_` + `_country_` + `_extra(True/None)_` + `_guid_`. So basically, any duplicates will be overitten.
+> Also, this script supports multi-threading.
+
+## Disclaimer
 This tool was created for educational purposes. Use it at your own risk.
