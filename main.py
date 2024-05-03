@@ -4,6 +4,7 @@ import threading
 import colorama
 import shutil
 import re
+from utils import *
 
 def load_cookies_from_file(cookie_file):
     """Load cookies from a given file and return a dictionary of cookies."""
@@ -34,13 +35,13 @@ def extract_info(response_text):
 
 def handle_successful_login(cookie_file, info, hits_folder):
     """Handle the actions required after a successful login."""
-    print(colorama.Fore.GREEN + f"Login successful with {cookie_file}. Country: {info['countryOfSignup']}. Member since: {info['memberSince']}" + colorama.Fore.RESET)
+    print(colorama.Fore.GREEN + f"> Login successful with {cookie_file}. Country: {info['countryOfSignup']}. Member since: {info['memberSince']}" + colorama.Fore.RESET)
     new_filename = f"cookie_{info['countryOfSignup']}_{info['showExtraMemberSection']}_{info['userGuid']}.txt"
     shutil.move(cookie_file, os.path.join(hits_folder, new_filename))
 
 def handle_failed_login(cookie_file, failures_folder):
     """Handle the actions required after a failed login."""
-    print(colorama.Fore.RED + f"Login failed with {cookie_file}. Country of Signup not available or null." + colorama.Fore.RESET)
+    print(colorama.Fore.RED + f"> Login failed with {cookie_file}. This cookie has expired. Moved to failures!" + colorama.Fore.RESET)
     shutil.move(cookie_file, os.path.join(failures_folder, os.path.basename(cookie_file)))
 
 def process_cookie_file(cookie_file, hits_folder, failures_folder):
@@ -57,7 +58,7 @@ def process_cookie_file(cookie_file, hits_folder, failures_folder):
             handle_failed_login(cookie_file, failures_folder)
             return False
     except Exception as e:
-        print(colorama.Fore.YELLOW + f"Error with {cookie_file}: {str(e)}" + colorama.Fore.RESET)
+        print(colorama.Fore.YELLOW + f"> Error with {cookie_file}: {str(e)}" + colorama.Fore.RESET)
         handle_failed_login(cookie_file, failures_folder)
 
 def worker(cookie_files, hits_folder, failures_folder):
@@ -72,11 +73,29 @@ def check_cookies_directory(directory_path, hits_folder, failures_folder, num_th
     os.makedirs(failures_folder, exist_ok=True)
     cookie_files = [os.path.join(directory_path, f) for f in os.listdir(directory_path) if f.endswith('.txt')]
     threads = [threading.Thread(target=worker, args=(cookie_files, hits_folder, failures_folder)) for _ in range(min(num_threads, len(cookie_files)))]
+
+    clear_screen()
+    print_banner()
+    print(colorama.Fore.CYAN + f"\n> Started checking {len(cookie_files)} cookie files..." + colorama.Fore.RESET)
     
     for thread in threads:
         thread.start()
     for thread in threads:
         thread.join()
+
+def get_started(cookies_folder, cookies_error=False):
+    """Get started with the program."""
+    os.makedirs(cookies_folder, exist_ok=True)
+    if not cookies_error:
+        clear_screen()
+        print_banner()
+        print(colorama.Fore.GREEN + "\nWelcome, after moving your cookies to (cookies) folder, press\n               Enter if you're ready to start!" + colorama.Fore.RESET)
+
+    input()
+    dir_content = [f for f in os.listdir(cookies_folder) if not f.startswith('.') and f.endswith('.txt')]
+    if not dir_content:
+        print(colorama.Fore.RED + "> No cookies found in the cookies folder.\n> Please add cookies in Netscape format (.txt) and try again." + colorama.Fore.RESET)
+        get_started(cookies_folder, True)
 
 def main():
     """Initialize the program."""
@@ -84,6 +103,7 @@ def main():
     cookies_folder = "cookies"  # Directory where your cookies are stored
     hits_folder = "hits"  # Directory to save working cookies
     failures_folder = "failures"  # Directory to move failed cookies
+    get_started(cookies_folder)
     check_cookies_directory(cookies_folder, hits_folder, failures_folder)
 
 if __name__ == "__main__":
