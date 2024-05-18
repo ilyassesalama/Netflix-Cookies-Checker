@@ -1,5 +1,5 @@
 # Netflix Cookies Checker
-This tools helps you automate the process of checking if a Netflix cookie is valid or not saving you time and effort. Simply put all of your cookies in Netscape format (.txt) in the `cookies` directory then run the script. It will check all of the cookies and output the valid ones in a new folder called `hits`, and the invalid ones in a new folder called `failures`.
+This tools helps you automate the process of checking if a Netflix cookie is valid or not saving you time and effort. Simply put all of your cookies in Netscape or JSON format (.txt | .json) in the `cookies` directory then run the script. It will check all of the cookies and output the valid ones in a new folder called `hits`, and the invalid ones in a new folder called `failures`.
 
 ## How to run the script?
 1. Install the required packages by running `pip install -r requirements.txt`.
@@ -7,7 +7,7 @@ This tools helps you automate the process of checking if a Netflix cookie is val
 3. Run the script by running `python main.py`.
 
 > [!NOTE]
-> No proxy is needed. Also, this script only supports Netscape format for now.
+> No proxy is needed. Also, this script supports both Netscape and JSON format now.
 
 Keep in mind that the cookies will be renamed then moved to their respective folders. If the cookie is valid, the script will try to extract 4 things:
 - The country of sign up. (e.g. US, BR, MX, etc.).
