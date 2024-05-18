@@ -18,6 +18,7 @@ hits_folder = "hits"  # Directory to save working cookies
 failures_folder = "failures"  # Directory to move failed cookies
 broken_folder = "broken"  # Directory to move broken cookies
 
+
 def load_cookies_from_file(cookie_file):
     """Load cookies from a given file and return a dictionary of cookies."""
     cookies = {}
@@ -99,6 +100,9 @@ def check_cookies_directory(num_threads=3):
     os.makedirs(hits_folder, exist_ok=True)
     os.makedirs(failures_folder, exist_ok=True)
     os.makedirs(broken_folder, exist_ok=True)
+    
+    process_json_files(cookies_folder)  # Convert JSON cookies to Netscape format
+
     cookie_files = [os.path.join(cookies_folder, f) for f in os.listdir(cookies_folder) if f.endswith('.txt')]
     threads = [threading.Thread(target=worker, args=(cookie_files,)) for _ in range(min(num_threads, len(cookie_files)))]
 
@@ -132,9 +136,9 @@ def get_started(cookies_error=False):
         print(colorama.Fore.GREEN + "\nWelcome, after moving your cookies to (cookies) folder, press\n               Enter if you're ready to start!" + colorama.Fore.RESET)
 
     input()
-    dir_content = [f for f in os.listdir(cookies_folder) if not f.startswith('.') and f.endswith('.txt')]
+    dir_content = [f for f in os.listdir(cookies_folder) if not f.startswith('.') and (f.endswith('.txt') or f.endswith('.json'))]
     if not dir_content:
-        print(colorama.Fore.RED + "> No cookies found in the cookies folder.\n> Please add cookies in Netscape format (.txt) and try again." + colorama.Fore.RESET)
+        print(colorama.Fore.RED + "> No cookies found in the cookies folder.\n> Please add cookies in Netscape/JSON format (.txt | .json) and try again." + colorama.Fore.RESET)
         get_started(True)
 
 def main():
