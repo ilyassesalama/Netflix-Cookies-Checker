@@ -9,6 +9,7 @@ from utils import *
 # Global counters
 total_working = 0
 total_fails = 0
+total_unsubscribed = 0
 total_checked = 0
 lock = threading.Lock()
 
@@ -46,13 +47,23 @@ def extract_info(response_text):
         'countryOfSignup': r'"countryOfSignup":\s*"([^"]+)"',
         'memberSince': r'"memberSince":\s*"([^"]+)"',
         'userGuid': r'"userGuid":\s*"([^"]+)"',
-        'showExtraMemberSection': r'"showExtraMemberSection":\s*([^,]+)'
+        'showExtraMemberSection': r'"showExtraMemberSection":\s*([^,]+)',
+        'membershipStatus': r'"membershipStatus":\s*"([^"]+)"',
     }
     return {key: re.search(pattern, response_text).group(1) if re.search(pattern, response_text) else None for key, pattern in patterns.items()}
 
-def handle_successful_login(cookie_file, info):
+def handle_successful_login(cookie_file, info, is_subscribed):
     """Handle the actions required after a successful login."""
     global total_working
+    global total_unsubscribed
+
+    if not is_subscribed:
+        with lock:
+            total_unsubscribed += 1
+        print(colorama.Fore.MAGENTA + f"> Login successful with {cookie_file}. But the user is not subscribed. Moved to failures!" + colorama.Fore.RESET)
+        shutil.move(cookie_file, os.path.join(failures_folder, os.path.basename(cookie_file)))
+        return
+
     with lock:
         total_working += 1
     print(colorama.Fore.GREEN + f"> Login successful with {cookie_file}. Country: {info['countryOfSignup']}. Member since: {info['memberSince']}" + colorama.Fore.RESET)
@@ -77,9 +88,9 @@ def process_cookie_file(cookie_file):
         cookies = load_cookies_from_file(cookie_file)
         response_text = make_request_with_cookies(cookies)
         info = extract_info(response_text)
-
         if info['countryOfSignup'] and info['countryOfSignup'] != "null":
-            handle_successful_login(cookie_file, info)
+            is_subscribed = info['membershipStatus'] == "CURRENT_MEMBER"
+            handle_successful_login(cookie_file, info, is_subscribed)
             return True
         else:
             handle_failed_login(cookie_file)
@@ -124,7 +135,8 @@ def printStats():
     print(colorama.Fore.CYAN + f"> Statistics:" + colorama.Fore.RESET)
     print(f"  - 📈 Total checked: {total_checked}")
     print(f"  - ✅ Working cookies: {colorama.Fore.GREEN}{total_working}{colorama.Fore.RESET}")
-    print(f"  - ❌ Dead cookies: {colorama.Fore.RED}{total_fails}{colorama.Fore.RESET}")
+    print(f"  - ❌ Working but no subscription: {colorama.Fore.MAGENTA}{total_unsubscribed}{colorama.Fore.RESET}")
+    print(f"  - 💀 Dead cookies: {colorama.Fore.RED}{total_fails}{colorama.Fore.RESET}")
     print("\n")
 
 def get_started(cookies_error=False):
