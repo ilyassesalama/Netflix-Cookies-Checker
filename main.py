@@ -33,7 +33,7 @@ def load_cookies_from_file(cookie_file):
                 domain, _, path, secure, expires, name, value = parts[:7]
                 cookies[name] = value
             else:
-                print(colorama.Fore.YELLOW + f"> Invalid cookie line: {line.strip()}" + colorama.Fore.RESET)
+                print(colorama.Fore.YELLOW + f"> Invalid cookie line in {cookie_file}: {line.strip()}" + colorama.Fore.RESET)
                 invalid_lines = True
                 break
     if invalid_lines:
