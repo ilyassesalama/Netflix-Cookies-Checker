@@ -23,16 +23,23 @@ broken_folder = "broken"  # Directory to move broken cookies
 def load_cookies_from_file(cookie_file):
     """Load cookies from a given file and return a dictionary of cookies."""
     cookies = {}
+    invalid_lines = False
     with open(cookie_file, 'r', encoding='utf-8') as f:
         for line in f:
+            if line.startswith('#') or line.strip() == '':
+                continue
             parts = line.strip().split('\t')
             if len(parts) >= 7:
                 domain, _, path, secure, expires, name, value = parts[:7]
                 cookies[name] = value
             else:
                 print(colorama.Fore.YELLOW + f"> Invalid cookie line: {line.strip()}" + colorama.Fore.RESET)
-                if os.path.exists(cookie_file):
-                    shutil.move(cookie_file, os.path.join(broken_folder, os.path.basename(cookie_file)))
+                invalid_lines = True
+                break
+    if invalid_lines:
+        if os.path.exists(cookie_file):
+            shutil.move(cookie_file, os.path.join(broken_folder, os.path.basename(cookie_file)))
+        return None
     return cookies
 
 def make_request_with_cookies(cookies):
@@ -86,6 +93,8 @@ def process_cookie_file(cookie_file):
         total_checked += 1
     try:
         cookies = load_cookies_from_file(cookie_file)
+        if cookies is None:
+            return False
         response_text = make_request_with_cookies(cookies)
         info = extract_info(response_text)
         if info['countryOfSignup'] and info['countryOfSignup'] != "null":
