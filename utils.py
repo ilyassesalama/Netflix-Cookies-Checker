@@ -24,9 +24,10 @@ def clear_screen():
 
 def convert_to_netscape_format(cookie):
     """ Convert the cookie dictionary to the Netscape cookie format string """
+    flag = cookie.get('flag', '').upper()
     return "{}\t{}\t{}\t{}\t{}\t{}\t{}".format(
-        cookie['domain'], 'TRUE' if cookie['flag'].upper() == 'TRUE' else 'FALSE', cookie['path'],
-        'TRUE' if cookie['secure'] else 'FALSE', cookie['expiration'], cookie['name'], cookie['value']
+        cookie['domain'], 'TRUE' if flag == 'TRUE' else 'FALSE', cookie['path'],
+        'TRUE' if cookie.get('secure', False) else 'FALSE', cookie.get('expiration', ''), cookie['name'], cookie['value']
     )
 
 def process_json_files(directory):
@@ -34,7 +35,6 @@ def process_json_files(directory):
     json_after_conversion_folder = "json_cookies_after_conversion"  # Directory to move JSON cookies after conversion
 
     os.makedirs(json_after_conversion_folder, exist_ok=True)
-    
     for filename in os.listdir(directory):
         if filename.endswith(".json"):
             file_path = os.path.join(directory, filename)
