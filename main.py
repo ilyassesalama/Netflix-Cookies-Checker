@@ -56,8 +56,14 @@ def extract_info(response_text):
         'userGuid': r'"userGuid":\s*"([^"]+)"',
         'showExtraMemberSection': r'"showExtraMemberSection":\s*\{\s*"fieldType":\s*"Boolean",\s*"value":\s*(true|false)',
         'membershipStatus': r'"membershipStatus":\s*"([^"]+)"',
+        'emailAddress': r'"emailAddress":\s*"([^"]+)"'
     }
-    return {key: re.search(pattern, response_text).group(1) if re.search(pattern, response_text) else None for key, pattern in patterns.items()}
+    info = {key: re.search(pattern, response_text).group(1) if re.search(pattern, response_text) else None for key, pattern in patterns.items()}
+    if info.get('emailAddress'):
+        info['emailAddress'] = bytes(info['emailAddress'], 'utf-8').decode('unicode-escape')
+    if info.get('memberSince'):
+        info['memberSince'] = bytes(info['memberSince'], 'utf-8').decode('unicode-escape')
+    return info
 
 def handle_successful_login(cookie_file, info, is_subscribed):
     """Handle the actions required after a successful login."""
@@ -74,7 +80,7 @@ def handle_successful_login(cookie_file, info, is_subscribed):
     with lock:
         total_working += 1
     print(colorama.Fore.GREEN + f"> Login successful with {cookie_file} | " + colorama.Fore.LIGHTGREEN_EX + f"\033[3mCountry: {info['countryOfSignup']}, Member since: {info['memberSince']}, Extra members: {info['showExtraMemberSection']}.\033[0m" + colorama.Fore.RESET)
-    new_filename = f"cookie_{info['countryOfSignup']}_{info['showExtraMemberSection']}_{info['userGuid']}.txt"
+    new_filename = f"cookie_{info['countryOfSignup']}_{info['showExtraMemberSection']}_{info['emailAddress']}.txt"
     shutil.move(cookie_file, os.path.join(hits_folder, new_filename))
 
 def handle_failed_login(cookie_file):
