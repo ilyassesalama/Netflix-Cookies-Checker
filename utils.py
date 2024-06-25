@@ -34,9 +34,9 @@ def process_json_files(directory):
     """ Process JSON files, convert them to Netscape format, and move the originals to a different folder """
     json_after_conversion_folder = "json_cookies_after_conversion"  # Directory to move JSON cookies after conversion
 
-    os.makedirs(json_after_conversion_folder, exist_ok=True)
     for filename in os.listdir(directory):
         if filename.endswith(".json"):
+            os.makedirs(json_after_conversion_folder, exist_ok=True)
             file_path = os.path.join(directory, filename)
             with open(file_path, 'r') as file:
                 try:
