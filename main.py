@@ -4,6 +4,8 @@ import threading
 import colorama
 import shutil
 import re
+import html
+import json
 from utils import *
 
 # Global counters
@@ -50,20 +52,34 @@ def make_request_with_cookies(cookies):
 
 def extract_info(response_text):
     """Extract relevant information from the response text."""
-    patterns = {
-        'countryOfSignup': r'"countryOfSignup":\s*"([^"]+)"',
-        'memberSince': r'"memberSince":\s*"([^"]+)"',
-        'userGuid': r'"userGuid":\s*"([^"]+)"',
-        'showExtraMemberSection': r'"showExtraMemberSection":\s*\{\s*"fieldType":\s*"Boolean",\s*"value":\s*(true|false)',
-        'membershipStatus': r'"membershipStatus":\s*"([^"]+)"',
-        'emailAddress': r'"emailAddress":\s*"([^"]+)"'
-    }
-    info = {key: re.search(pattern, response_text).group(1) if re.search(pattern, response_text) else None for key, pattern in patterns.items()}
-    if info.get('emailAddress'):
-        info['emailAddress'] = bytes(info['emailAddress'], 'utf-8').decode('unicode-escape')
-    if info.get('memberSince'):
-        info['memberSince'] = bytes(info['memberSince'], 'utf-8').decode('unicode-escape')
-    return info
+    pattern = r'netflix\.reactContext\s*=\s*(\{.*?\});'
+    match = re.search(pattern, response_text, re.DOTALL)
+    
+    if match:
+        json_str = match.group(1)
+        json_str = html.unescape(json_str)
+        json_str = re.sub(r'\\x([0-9A-Fa-f]{2})', lambda m: chr(int(m.group(1), 16)), json_str)
+        
+        try:
+            react_context = json.loads(json_str)
+            user_info = react_context.get("models", {}).get("userInfo", {}).get("data", {})
+            signup_info = react_context.get("models", {}).get("signupContext", {}).get("data", {})
+
+            info = {
+                "countryOfSignup": user_info.get("countryOfSignup"),
+                "memberSince": user_info.get("memberSince"),
+                "userGuid": user_info.get("userGuid"),
+                "membershipStatus": user_info.get("membershipStatus"),
+                "showExtraMemberSection": str(signup_info.get("flow", {}).get("fields", {}).get("showExtraMemberSection", {}).get("value")).lower(),
+                "emailAddress": user_info.get("emailAddress"),
+            }
+            return info
+        except json.JSONDecodeError as e:
+            print("Failed to parse JSON:", e)
+            return None
+    else:
+        print("netflix.reactContext not found in the response text.")
+        return None
 
 def handle_successful_login(cookie_file, info, is_subscribed):
     """Handle the actions required after a successful login."""
